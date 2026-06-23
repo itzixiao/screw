@@ -4,15 +4,16 @@ permissions:
   pull-requests: write
 on:
   schedule:
-    - cron: '0 1 * * *'
+    - cron: '0 1 * * *' # UTC1点=北京时间9点每日同步
   workflow_dispatch:
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    # 仅本仓库是Fork才执行，普通仓库跳过
     if: ${{ github.event.repository.fork == true }}
     steps:
-      - name: 调用GitHub官方merge-upstream接口
+      - name: 调用GitHub官方merge-upstream接口（等同于网页Sync fork）
         uses: actions/github-script@v8
         with:
           script: |
@@ -21,12 +22,12 @@ jobs:
               const res = await github.rest.repos.mergeUpstream({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                branch: "master"
+                branch: "master" // 你的默认分支，master自行修改
               });
               console.log("同步成功：", res.data);
-            } catch (err)
+            } catch (err) {
               if (err.status === 409) {
-                console.log("无需同步/存在冲突，请手动页面Sync fork");
+                console.log("无需同步/存在冲突，请手动到仓库页面Sync fork");
               } else {
                 throw err;
               }
